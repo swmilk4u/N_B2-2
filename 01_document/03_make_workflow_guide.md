@@ -11,7 +11,7 @@
 | 항목 | 내용 |
 |------|------|
 | Make 계정 | make.com 무료 플랜 (월 1,000 작업) |
-| OpenAI API 키 | platform.openai.com → API Keys |
+| **Google AI Studio API 키** | [aistudio.google.com](https://aistudio.google.com) → API Keys → Create API Key |
 | Notion Integration Token | notion.so → Settings → Integrations |
 | Notion Database ID | DB 페이지 URL에서 추출 |
 
@@ -128,27 +128,26 @@ AI | 인공지능 | LLM | GPT | 머신러닝 | machine learning
 
 ---
 
-### 모듈 7 – OpenAI ChatGPT (AI 요약)
+### 모듈 7 – Google Gemini (AI 요약)
 
 | 설정 항목 | 값 |
-|----------|----|
-| 모듈 | **OpenAI > Create a Completion** |
-| Connection | OpenAI API Key 연결 |
-| Model | `gpt-4o-mini` |
-| Max Tokens | `300` |
+|----------|----|  
+| 모듈 | **Google Gemini > Generate Content** |
+| Connection | Google AI Studio API Key 연결 |
+| Model | `gemini-2.0-flash` |
 | Temperature | `0.3` |
 
-**System Prompt**
+> ✅ **Gemini 무료 티어**: 일 1,500원격 / 분 15회 호출 무료. 이 오토메이션의 일 1건 처리에 없는 요금.
+
+**Prompt (System + User 통합 입력)**
 ```
+[시스템]
 당신은 전문 기술 뉴스 요약 편집자입니다.
 입력된 뉴스 기사를 읽고 핵심 내용을 정확하고 간결하게 한국어로 요약합니다.
 반드시 3줄 이내 불릿 포인트(•)로 작성하세요.
-```
 
-**User Prompt**
-```
+[유저]
 다음 뉴스 기사를 3줄 이내로 요약해주세요:
-
 제목: {{3.title}}
 내용: {{3.summary}}
 ```
@@ -179,7 +178,7 @@ AI | 인공지능 | LLM | GPT | 머신러닝 | machine learning
 | Notion 속성 | 타입 | Make 값 |
 |-------------|------|---------|
 | `Title` | Title | `{{3.title}}` |
-| `Summary` | Rich Text | `{{7.choices[].message.content}}` |
+| `Summary` | Rich Text | `{{7.candidates[].content.parts[].text}}` |
 | `URL` | URL | `{{3.link}}` |
 | `Published Date` | Date | `{{3.pubDate}}` |
 | `Source` | Select | `AI타임스` (또는 피드 이름) |
@@ -228,7 +227,7 @@ Make 시나리오 설정 → **Allow storing Incomplete Executions** 활성화
 
 ### 보너스 1 – 감성 분석 태그
 
-모듈 7 (OpenAI) User Prompt에 추가:
+모듈 7 (Google Gemini) Prompt에 추가:
 ```
 추가로 기사의 감성을 분석하여 아래 중 하나로 분류하세요:
 [긍정적] [부정적] [중립적]
@@ -266,6 +265,6 @@ Make 시나리오 설정 → **Allow storing Incomplete Executions** 활성화
 | 항목 | 무료 플랜 기준 |
 |------|---------------|
 | Make 작업 수 | 월 1,000 작업 (하루 약 33건 여유) |
-| OpenAI gpt-4o-mini | 입력 $0.00015/1K tokens → 일 1건 ≈ $0.0001 미만 |
+| **Google Gemini** | **완전 무료** (일 1,500원격 / 분 15회 한도 내) |
 | Notion API | 무료 |
-| **합계** | 사실상 무료 (OpenAI 소량 과금) |
+| **합계** | **전체 무료** (Make + Gemini + Notion 모두 무료 플랜 적용 가능) |

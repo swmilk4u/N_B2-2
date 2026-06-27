@@ -3,7 +3,7 @@
 > **Project B** | Codyssey AI Native Course  
 > **제출일**: 2026-06-28  
 > **자동화 툴**: Make (make.com)  
-> **AI 모델**: OpenAI GPT-4o-mini  
+> **AI 모델**: Google Gemini 2.0 Flash  
 > **저장소**: Notion Database
 
 ---
@@ -33,7 +33,7 @@
 |------|------|
 | 자동화 플랫폼 | **Make** (make.com) |
 | RSS 수집 | Make 내장 RSS 모듈 |
-| AI 요약 | OpenAI GPT-4o-mini |
+| AI 요약 | **Google Gemini 2.0 Flash** (Google AI Studio API) |
 | 저장소 | Notion Database |
 | 중복 방지 | Make Data Store (URL MD5 해시) |
 | 에러 알림 | Make Error Handler + Email |
@@ -69,8 +69,8 @@
     하루 1건만 선택
          │
          ▼
-[6] OpenAI ChatGPT
-    gpt-4o-mini로 3줄 요약 생성
+[6] Google Gemini
+     gemini-2.0-flash로 3줄 요약 생성
          │
          ▼
 [7] Data Store 저장
@@ -124,21 +124,22 @@
 - **Make 모듈**: Flow Control > Limiter
 - **최대값**: 1 (하루 1건만 처리)
 
-### 모듈 6 – OpenAI ChatGPT (AI 요약)
-- **Make 모듈**: OpenAI > Create a Completion
-- **모델**: `gpt-4o-mini`
-- **Max Tokens**: 300
+### 모듈 6 – Google Gemini (AI 요약)
+- **Make 모듈**: Google Gemini > Generate Content
+- **키 발급**: [Google AI Studio](https://aistudio.google.com) → API Keys
+- **모델**: `gemini-2.0-flash`
 - **Temperature**: 0.3
 
-**시스템 프롬프트**
+> ✅ **장점**: Gemini 무료 티어는 일 1,500원격/분 15회 호출 무료. API 키만 있으면 별도 요금 없이 사용 가능.
+
+**프롬프트**
 ```
+[시스템]
 당신은 전문 기술 뉴스 요약 편집자입니다.
 입력된 뉴스 기사를 읽고 핵심 내용을 정확하고 간결하게 한국어로 요약합니다.
 반드시 3줄 이내 불릿 포인트(•)로 작성하세요.
-```
 
-**유저 프롬프트**
-```
+[유저]
 다음 뉴스 기사를 3줄 이내로 요약해주세요:
 제목: {{제목}}
 내용: {{본문}}
@@ -229,7 +230,7 @@ AI, 인공지능, LLM, GPT, ChatGPT, Gemini, Claude,
 | AI 요약 호출 | 기사 1건당 1회 (재시도 제외) |
 | 하루 처리 건수 | Limiter로 1건 제한 |
 | Make 작업 수 | 하루 약 30작업 → 무료 플랜(월 1,000) 내 처리 |
-| GPT-4o-mini 비용 | 일 1건 ≈ $0.0001 미만 |
+| **Gemini 비용** | **무료** (일 1,500원격, 분 15회 한도 내 무료 사용 가능) |
 
 ---
 
