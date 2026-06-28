@@ -1,7 +1,6 @@
 # Make 워크플로우 상세 설정 가이드
 
 > **도구**: Make (make.com)  
-> **업데이트**: 2026-06-28  
 > **워크플로우명**: N_B2-2_News rss  
 > **시나리오 URL**: https://us2.make.com/2493980/scenarios/5514616/edit
 
@@ -58,12 +57,6 @@ RSS[2] → Text parser[3] → Text parser[5] → Google Gemini AI[8] → Notion[
 ```
 # 국내
 https://www.aitimes.com/rss/allArticle.xml    # AI타임스 (실사용)
-https://zdnet.co.kr/rss/                       # ZDNet Korea
-
-# 국제
-https://techcrunch.com/feed/                   # TechCrunch
-https://feeds.feedburner.com/oreilly/radar/atom  # O'Reilly Radar
-https://rss.arxiv.org/rss/cs.AI               # arXiv AI
 ```
 
 ---
@@ -220,16 +213,3 @@ AI, 인공지능, LLM, GPT, ChatGPT, Gemini, Claude,
 
 5. 스케줄 활성화: 하단 토글 ON (Daily at 09:00)
 ```
-
----
-
-## 6. 비용 예상 (2026년 기준)
-
-| 항목 | 무료 플랜 기준 |
-|------|---------------|
-| Make 작업 수 | 월 1,000 작업 (하루 약 33건 여유) |
-| **Google Gemini 2.5 Flash** | 무료 티어: 분당 5건, 일 500건 |
-| Notion API | 무료 |
-| **합계** | **전체 무료** (하루 10건 이하 처리 기준) |
-
-> ⚠️ Gemini 2.5 Flash 무료 티어는 분당 5 RPM 제한. RSS 최대 수집을 4건으로 설정 시 안전.

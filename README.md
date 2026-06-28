@@ -1,293 +1,205 @@
-# N_B2-2 뉴스 요약 자동화 워크플로우 만들기
+# N_B2-2 뉴스 요약 자동화 워크플로우 (Make & n8n)
 
 > **Project B** | Codyssey AI Native Course  
-> **제출일**: 2026-06-28  
-> **자동화 툴**: Make (make.com)  
-> **AI 모델**: Google Gemini 2.5 Flash (Gemini Flash Latest)  
-> **저장소**: Notion Database
+> **자동화 툴**: Make (make.com) & n8n  
+> **AI 모델**: Google Gemini 2.5 Flash (gemini-2.5-flash) 및 OpenAI GPT-4o-mini  
+> **저장소**: Notion Database  
 
----
-
-## 📋 목차
-
-1. [프로젝트 개요](#1-프로젝트-개요)
-2. [워크플로우 구조](#2-워크플로우-구조)
-3. [단계별 모듈 설명](#3-단계별-모듈-설명)
-4. [주제 필터링 기준](#4-주제-필터링-기준)
-5. [에러 처리 정책](#5-에러-처리-정책)
-6. [비용 및 중복 방지 정책](#6-비용-및-중복-방지-정책)
-7. [노션 DB 스키마](#7-노션-db-스키마)
-8. [산출물 목록](#8-산출물-목록)
-9. [팀 역할 및 개인 작업 요약](#9-팀-역할-및-개인-작업-요약)
 
 ---
 
 ## 1. 프로젝트 개요
-
-새로운 프로젝트 착수 시 시장 조사에 소요되는 반복적 수작업을 자동화한다.  
-**RSS 피드 수집 → HTML 정제 → AI 키워드 필터 → AI 요약 → 노션 DB 자동 저장** 파이프라인을 Make 노코드 플랫폼으로 구현하여 매일 최신 AI 관련 뉴스를 자동으로 요약 정리한다.
+본 프로젝트에서는 노코드(No-Code) 툴인 **Make**와 로코드(Low-Code) 툴인 **n8n** 두 가지 방식을 모두 활용하여 파이프라인을 다각도로 설계하고 성공적으로 가동시켰습니다.
+- **수집**: RSS 피드를 통한 최신 기술 뉴스 모니터링
+- **정제/필터**: HTML 노이즈 제거 및 사전에 정의한 기술 키워드 기반 필터링
+- **요약**: 생성형 AI(Gemini 2.5 Flash / GPT-4o-mini)를 통한 3줄 한국어 불릿 요약
+- **저장**: Notion 데이터베이스에 저장하여 지속 관리
 
 ### 사용 도구 스택
-
-| 역할 | 도구 |
-|------|------|
-| 자동화 플랫폼 | **Make** (make.com) |
-| RSS 수집 | Make 내장 RSS 모듈 |
-| HTML 정제 | Make Text parser (HTML to text) |
-| 키워드 필터 | Make Text parser (Match pattern) |
-| AI 요약 | **Google Gemini 2.5 Flash** (Gemini Flash Latest) |
-| 저장소 | **Notion Database** (Internal Integration 연결) |
-
-### 실행 결과
-
-| 항목 | 내용 |
-|------|------|
-| Make 시나리오 | https://us2.make.com/2493980/scenarios/5514616/edit |
-| Notion DB | https://app.notion.com/p/38cce80de19780d9ae01e400904c153d |
-| 테스트 실행 결과 | 8건 처리 (7건 성공, 1건 Rate Limit - 무료 티어 한도) |
+| 역할 | Make 워크플로우 | n8n 워크플로우 |
+| :--- | :--- | :--- |
+| **자동화 플랫폼** | **Make** (SaaS형 노코드) | **n8n** (셀프 호스팅/로코드) |
+| **뉴스 수집 (RSS)** | RSS (Retrieve RSS feed items) | RSS Feed Read Node |
+| **HTML 정제** | Text parser (HTML to text) | Code Node (Regex & DOM 파싱) |
+| **주제 필터링** | Text parser (Match pattern) | Code Node (키워드 매칭 및 최신 1건 선택) |
+| **AI 요약 모델** | **Google gemini-2.5-flash** | **OpenAI gpt-4o-mini** |
+| **저장 플랫폼** | **Notion Database** (Legacy 모듈) | **Notion Database** (HTTP Request 노드) |
 
 ---
 
-## 2. 워크플로우 구조
+## 2. Make 워크플로우 구조 및 설명
 
+### 2.1 워크플로우 구조도
 ```
-┌─────────────────────────────────────────────────────────┐
-│          Make 시나리오: N_B2-2_News rss                  │
-│          매일 09:00 자동 실행 (Asia/Seoul)                │
-└─────────────────────────────────────────────────────────┘
-
-[Schedule Trigger]
-    매일 09:00 (Asia/Seoul)
-         │
-         ▼
-[모듈 2] RSS 피드 수집
-    https://www.aitimes.com/rss/allArticle.xml
-    최대 10건 수집
-         │
-         ▼
+[Schedule Trigger] (매일 09:00, Asia/Seoul)
+     │
+     ▼
+[모듈 2] RSS 피드 수집 (Retrieve RSS feed items)
+     │ Feed URL: https://www.aitimes.com/rss/allArticle.xml
+     ▼
 [모듈 3] HTML 정제 (Text parser · HTML to text)
-    RSS 본문 HTML 태그 제거 → 순수 텍스트 추출
-         │
-         ▼
+     │
+     ▼
 [모듈 5] 키워드 필터 (Text parser · Match pattern)
-    AI | 인공지능 | LLM | GPT | Gemini | 머신러닝 등
-    Continue even if no match: Yes
-         │
-         ▼
-[모듈 8] Google Gemini AI (Gemini Flash Latest)
-    3줄 이내 한국어 불릿 요약 생성
-         │
-         ▼
+     │ AI | 인공지능 | LLM | GPT | 머신러닝 등
+     ▼
+[모듈 8] Google Gemini AI (gemini-2.5-flash)
+     │ System Prompt 기반 3줄 요약 생성
+     ▼
 [모듈 14] Notion DB 저장 (Create a Database Item Legacy)
-    Title / Summary / URL / Date / Source / Status 매핑
 ```
 
----
+### 2.2 워크플로우 성공 스크린샷
+![Make 워크플로우](./02_img/01%20make/01%20메이크%20워크플로우_1.png)
 
-## 3. 단계별 모듈 설명
+### 2.3 Notion 저장 결과 스크린샷
+![Make 노션 저장 결과](./02_img/01%20make/02%20메이크%20노션%20결과_1.png)
 
-### 모듈 2 – RSS Feed 수집
-- **Make 모듈**: RSS > Retrieve RSS feed items
-- **수집 피드**: `https://www.aitimes.com/rss/allArticle.xml` (AI타임스)
-- **수집 건수**: 최대 10건 (Rate Limit 고려 시 4건 권장)
-- **날짜 필터**: 없음 (스케줄 실행 시 마지막 처리 이후 신규 기사 자동 감지)
-
-### 모듈 3 – HTML 정제
-- **Make 모듈**: Text parser > HTML to text
-- **입력**: `{{2.description}}` (RSS 본문 HTML)
-- **역할**: HTML 태그 제거로 Gemini에 순수 텍스트 전달, 토큰 낭비 방지
-
-### 모듈 5 – 키워드 필터
-- **Make 모듈**: Text parser > Match pattern
-- **Pattern**: `(AI|인공지능|LLM|GPT|ChatGPT|Gemini|머신러닝|딥러닝|생성형|Claude|자동화)`
-- **Case sensitive**: No (대소문자 무시)
-- **Continue even if no match**: Yes (비매칭 시에도 파이프라인 계속 실행)
-
-### 모듈 8 – Google Gemini AI 요약
-- **Make 모듈**: Google Gemini AI > Generate a response
-- **모델**: `Gemini Flash Latest` (Gemini 2.5 Flash)
-- **역할**: 수집된 기사를 3줄 한국어 불릿으로 요약
-- **System Prompt**: 전문 기술 뉴스 요약 편집자 역할 지정
-
-**프롬프트**
-```
-[System]
-당신은 전문 기술 뉴스 요약 편집자입니다.
-입력된 뉴스 기사를 읽고 핵심 내용을 정확하고 간결하게 한국어로 요약합니다.
-반드시 3줄 이내 불릿 포인트(•)로 작성하세요.
-
-[User]
-다음 뉴스 기사를 3줄 이내로 요약해주세요:
-제목: {{2.title}}
-내용: {{3.text}}
-```
-
-### 모듈 14 – Notion DB 저장
-- **Make 모듈**: Notion > Create a Database Item (Legacy)
-- **연결**: Notion Internal Integration (`Make_NewsBot` 토큰)
-- **역할**: Gemini 요약 결과를 포함한 기사 정보를 Notion DB에 자동 저장
-
-> **Legacy 모듈 선택 이유**: Make의 신버전 Notion 모듈은 Internal Integration Token과 OAuth 방식이 달라 DB 목록 로드 불안정. Legacy 모듈은 Database ID 직접 입력으로 안정적 연동 가능.
+### 2.4 단계별 모듈 설명
+- **모듈 2 - RSS Feed 수집**: `https://www.aitimes.com/rss/allArticle.xml` (AI타임스) 피드로부터 뉴스 데이터를 수집합니다.
+- **모듈 3 - HTML 정제**: RSS 본문에 포함된 지저분한 HTML 태그를 제거해 순수 텍스트로 변환하여 AI 토큰 사용량을 최적화합니다.
+- **모듈 5 - 키워드 필터**: AI 관련 키워드 정규식 매칭을 거쳐 필터링합니다. 단, 파이프라인의 중단을 막기 위해 `Continue even if no matches` 옵션을 `Yes`로 적용했습니다.
+- **모듈 8 - Google Gemini AI 요약**: `gemini-2.5-flash` 모델을 사용하여 기사 제목 및 정제된 본문을 바탕으로 3줄 이내 불릿 기사 요약을 생성합니다.
+- **모듈 14 - Notion DB 저장**: 신규 모듈의 연동 불안정을 방지하고자 안정적인 `Legacy` 모듈을 선택하고 Database ID를 수동 입력하여 저장했습니다.
 
 ---
 
-## 4. 주제 필터링 기준
+## 3. n8n 워크플로우 구조 및 설명
 
-### 선택 키워드 목록 (OR 조건)
-
+### 3.1 워크플로우 구조도
 ```
-AI, 인공지능, LLM, GPT, ChatGPT, Gemini, Claude,
-머신러닝, 딥러닝, 생성형, 자동화
+[스케줄 트리거] (매일 09:00, Asia/Seoul)
+        │
+        ▼
+[RSS 수집(TechCrunch)]
+        │ Feed URL: https://techcrunch.com/feed/
+        ▼
+[주제 필터 (Code 노드)] ── 뉴스 없음(false) ──▶ [알림: 뉴스 없음] (정상 종료)
+        │ 뉴스 있음(true)
+        ▼
+[Notion 중복 조회] (원문 링크 비교)
+        │
+        ▼
+[신규 기사?] ── 중복 기사(false) ──▶ [중복: 스킵] (비용 0, 생략)
+        │ 신규 기사(true)
+        ▼
+[OpenAI 요약 (gpt-4o-mini)] (요약 + 감성 분석 수행)
+        │
+        ▼
+[요약 파싱 (Code 노드)]
+        │
+        ▼
+[Notion 저장] (HTTP Request 활용 API 저장)
 ```
 
-### 선택 이유
+### 3.2 워크플로우 성공 스크린샷
+![n8n 워크플로우](./02_img/02%20n8n/01_n8n_워크플로_성공.png)
 
-| 이유 | 설명 |
-|------|------|
-| **업무 관련성** | AI/ML 기술 트렌드가 프로젝트 방향에 직결됨 |
-| **빠른 변화** | AI 분야는 주 단위로 중요 뉴스가 발생하여 매일 모니터링 필요 |
-| **노이즈 감소** | 광고·이벤트성 기사를 걸러내고 실질적 기술 기사만 선별 |
-| **안정성** | `Continue even if no match: Yes`로 필터 미통과 시에도 파이프라인 유지 |
+### 3.3 Notion 저장 결과 스크린샷
+![n8n 노션 저장 결과](./02_img/02%20n8n/02_n8n_노션_DB_페이지.png)
 
----
-
-## 5. 에러 처리 정책
-
-### 에러 처리 흐름
-
-```
-오류 발생
-   │
-   ├─ [Gemini 429 Rate Limit] → 잠시 대기 후 재시도
-   │       원인: 무료 티어 분당 5건(5 RPM) 초과
-   │       해결: RSS 최대 수집 건수를 4건으로 제한
-   │
-   ├─ [Gemini 503 High Demand] → 5~10분 후 자동 재시도
-   │       원인: Google 서버 일시 과부하
-   │       해결: Make Run once 재시도 (일시적 해소)
-   │
-   ├─ [RSS 0건 수집] → RSS 필터/날짜 설정 확인
-   │       원인: Date 필터 조건 오류 (Date > now 형태)
-   │       해결: 필터 삭제 또는 RSS Date from 날짜 직접 입력
-   │
-   └─ [Notion 저장 실패] → Integration 연결 확인
-           원인: DB에 Integration 미연결
-           해결: Notion DB 페이지 ··· → 연결 → Make_NewsBot 추가
-```
-
-### 에러 유형별 처리 방법
-
-| 에러 유형 | 처리 방법 | 이유 |
-|-----------|-----------|------|
-| RSS 피드 수집 실패 | 재시도 후 스킵 | 일시적 서버 오류 대응 |
-| 키워드 미매칭 | 계속 진행 (Continue: Yes) | 필터 미통과를 오류로 처리 안 함 |
-| Gemini API 429 | 기사 수 줄이기 (4건 이하) | 무료 5 RPM 한도 준수 |
-| Gemini API 503 | 잠시 후 재시도 | 일시적 과부하, 곧 해소 |
-| Notion 저장 실패 | Integration 연결 재확인 | DB 페이지 수준 연결 필수 |
+### 3.4 단계별 노드 설명
+- **Schedule Trigger**: `cron 0 9 * * *` 설정을 통해 매일 오전 9시 정각(Asia/Seoul)에 워크플로우를 자동 가동합니다.
+- **RSS Feed Read**: TechCrunch RSS를 통해 최신 발행 기사 데이터를 수집합니다.
+- **주제 필터 (Code Node)**: AI 분야 키워드를 검색하여 매칭시키며, 과제 요구사항에 맞게 조건 충족 기사 중 **가장 최신 1건**을 최종 추출합니다. 기사가 존재하지 않는 경우 파이프라인의 에러가 아닌 정상 분기로 빠지게 처리합니다.
+- **Notion 중복 조회 (HTTP Request)**: Notion DB를 URL(원문 링크) 기준으로 필터링 쿼리하여 이미 등록된 기사가 있는지 선제 조회합니다.
+- **OpenAI 요약 (HTTP Request)**: 신규 기사인 경우에만 `gpt-4o-mini` API를 호출해 3줄 이내 요약과 함께 기사 감성(긍정/부정/중립)을 한 번에 분석합니다.
+- **요약 파싱 (Code Node)**: AI 응답에서 요약문과 감성 데이터를 발라내어 정제합니다.
+- **Notion 저장 (HTTP Request)**: 최종 정제된 텍스트 및 속성 값을 Notion DB에 저장합니다.
 
 ---
 
-## 6. 비용 및 중복 방지 정책
+## 4. 두 워크플로우 비교 분석 (Make vs n8n)
 
-### 비용 최적화
+자동화 목적을 달성하기 위해 사용한 두 툴의 차이점 및 특징을 다음과 같이 비교 분석했습니다.
 
-| 항목 | 정책 |
-|------|------|
-| AI 요약 호출 | 기사 1건당 1회 |
-| 하루 처리 건수 | RSS 최대 10건 (Rate Limit 고려 시 4건) |
-| Make 작업 수 | 하루 약 50작업 → 무료 플랜(월 1,000) 내 처리 |
-| **Gemini 비용** | **무료** (Gemini Flash Latest 무료 티어: 분당 5건) |
-
-### 비용 예상
-
-| 항목 | 무료 플랜 기준 |
-|------|---------------|
-| Make | 월 1,000 작업 무료 |
-| Google Gemini 2.5 Flash | 분당 5건, 일 500건 무료 |
-| Notion API | 무료 |
-| **합계** | **전체 무료 운영 가능** |
+| 비교 항목 | Make 워크플로우 | n8n 워크플로우 |
+| :--- | :--- | :--- |
+| **플랫폼 특징** | 클라우드 SaaS (웹 인터페이스 중심) | 오픈소스 / 셀프 호스팅 가능 (Docker 등) |
+| **요금 및 제한** | 무료 플랜: 월 1,000 operations 제한 | 셀프 호스팅 시 무료 (API 호출 비용만 발생) |
+| **적용 AI 모델** | Google gemini-2.5-flash | OpenAI gpt-4o-mini |
+| **멱등성 (중복 방지)** | Notion Legacy의 필터링이 어려워 RSS 설정에 의존 | 저장 전 Notion API 쿼리로 **중복 사전 탐지 및 건너뛰기** 완벽 구현 |
+| **비용 최적화** | 필터 여부와 상관없이 모듈 실행 횟수 차감 | 중복 기사는 요약 단계를 거치지 않고 종료되어 **AI 토큰 비용 0원** 유지 |
+| **에러 핸들링** | 모듈별 에러 디렉티브(Ignore, Resume) 연결 | `Error Trigger` 노드를 통해 중앙 집중식 에러 핸들링 가능 |
+| **장점** | UI/UX가 직관적이고 노코드 설정이 극도로 간편함 | 코드 노드(Javascript)를 쓸 수 있어 복잡한 가공과 분기 처리가 강력함 |
+| **단점** | 복잡한 조건 처리 시 오퍼레이션 소모량이 급격히 증가함 | 설치 및 세팅 장벽이 있으며 자격증명 설정이 조금 더 복잡함 |
 
 ---
 
-## 7. 노션 DB 스키마
+## 5. 주제 필터링 기준
 
-### 데이터베이스명: `뉴스 요약 자동화`
+### 5.1 필터 키워드
+* **Make**: `(AI|인공지능|LLM|GPT|ChatGPT|Gemini|머신러닝|딥러닝|생성형|Claude|자동화)` (정규식 OR 매칭)
+* **n8n**: `AI`, `artificial intelligence`, `machine learning`, `deep learning`, `LLM`, `GPT`, `OpenAI`, `Anthropic`, `Gemini`, `neural`, `generative`, `인공지능`, `생성형`, `머신러닝`, `딥러닝`
 
-| 속성명 | 타입 | 내용 | Make 매핑값 |
-|--------|------|------|-------------|
-| **이름** | Title | 기사 제목 | `{{2.title}}` |
-| **Summary** | Rich Text | AI 3줄 요약 | `{{8.result}}` |
-| **URL** | URL | 원문 링크 | `{{2.url}}` |
-| **Published Date** | Date | 기사 발행일 | `{{2.RSS fields: pubdate}}` |
-| **Source** | Text | 출처 피드명 | `AI타임스` (직접 입력, Map ON) |
-| **Status** | Select | 처리 상태 | `완료` (직접 입력, Map ON) |
-
-### 노션 저장 결과 예시
-
-```
-┌────────────────────────────────────────────────────┐
-│ 📰 오픈AI, 애플의 핵심 엔지니어 영입                │
-├────────────────────────────────────────────────────┤
-│ 📝 요약 (Gemini 2.5 Flash 생성)                    │
-│  • 애플의 혼합현실 헤드셋 핵심 엔지니어가 오픈AI 합류 │
-│  • 차세대 AI 하드웨어 제품군 개발 담당 예정          │
-│  • 메타와의 AI 하드웨어 경쟁 심화 전망              │
-├────────────────────────────────────────────────────┤
-│ 🔗 URL: https://www.aitimes.com/news/...           │
-│ 📅 발행일: 2026-06-28                              │
-│ 📡 출처: AI타임스                                  │
-│ ✅ 상태: 완료                                      │
-└────────────────────────────────────────────────────┘
-```
+### 5.2 선택 이유
+- **트렌드 집중**: 업무 생산성 향상과 밀접하게 연관된 AI/ML 기술 중심의 뉴스만을 골라내기 위함입니다.
+- **영한 혼용 지원**: 영문 IT 뉴스(TechCrunch 등)와 국내 IT 뉴스(AI타임스 등)에 모두 유연하게 대응하기 위해 키워드를 다국어로 구성했습니다.
 
 ---
 
-## 8. 산출물 목록
+## 6. 에러 처리 및 예외 복구 정책
 
-| 번호 | 산출물 | 파일/위치 |
-|------|--------|-----------|
-| ① | Make 워크플로우 상세 설정 가이드 | [03_make_workflow_guide.md](./01_document/03_make_workflow_guide.md) |
-| ② | 과제 미션 원문 | [PJ_B 과제미션.txt](./01_document/PJ_B%20과제미션.txt) |
-| ③ | README (과제 수행 보고서) | README.md (현재 파일) |
-| ④ | Make 워크플로우 실행 성공 스크린샷 | [메이크 결과_1.png](./02_img/메이크%20결과_1.png) |
-| ⑤ | Notion DB 저장 결과 스크린샷 | [노션_1.png](./02_img/노션_1.png) |
+안정적인 무인 가동을 실현하기 위해 설계한 예외 처리 체계는 다음과 같습니다.
 
----
+### 6.1 Make의 에러 정책
+- **Gemini Rate Limit (429 에러) 예방**: 무료 티어 제한(분당 5건)을 초과하지 않도록 RSS 수집 최대 개수를 4건 내외로 적절히 제어합니다.
+- **Notion 모듈 연동 불안정 대응**: 신형 모듈 대신 안정성이 확보된 Notion Legacy 모듈을 사용하여 필터링 오류를 예방합니다.
 
-## 9. 팀 역할 및 개인 작업 요약
-
-| 역할 | 담당 | 주요 작업 |
-|------|------|-----------|
-| 워크플로우 설계 | 전체 | Make 시나리오 구조 기획 및 모듈 연결 |
-| RSS 피드 선정 | 전체 | AI 관련 국내 RSS 피드(AI타임스) 조사 및 선정 |
-| AI 프롬프트 설계 | 전체 | Google Gemini Flash 요약 프롬프트 최적화 |
-| 노션 DB 설계 | 전체 | 속성 스키마 정의 및 Make Legacy 모듈 매핑 설정 |
-| 에러 처리 설계 | 전체 | RSS 날짜 필터, Gemini Rate Limit, Notion 연결 문제 해결 |
-| 문서화 | 전체 | README 및 워크플로우 가이드 작성 |
-
-> ℹ️ 이번 과제는 **개인 수행** 과제로 전 단계를 단독으로 진행하였습니다.
+### 6.2 n8n의 에러 정책
+- **일시 장애 자동 복구**: RSS, OpenAI, Notion 등 외부 API 통신 노드들에 대해 **최대 2회 자동 재시도(5초 간격)** 옵션을 지정했습니다.
+- **에러 격리 (Graceful Fail)**: 특정 뉴스 가공에 실패하더라도 전체 파이프라인이 멈추지 않고, 에러 로그 기록 후 다음 프로세스를 정상적으로 수행합니다.
+- **오류 감지 및 알림**: 최종 실패 건은 `Error Trigger` 노드가 이를 캐치하여 관리자 통지(Slack/Email NoOp 노드 연결) 경로를 실행합니다.
 
 ---
 
-## 🔧 구현 과정에서 해결한 주요 이슈
+## 7. 비용 및 중복 방지 정책
 
-| 이슈 | 원인 | 해결 |
-|------|------|------|
-| Notion DB ID 인식 불가 | 신버전 모듈과 Internal Token 비호환 | **Legacy 모듈**로 교체 + 수동 ID 입력 |
-| RSS 0건 수집 | `Date created > now` 필터 오류 | RSS와 Text parser 사이 필터 삭제 |
-| Gemini `limit: 0` | `gemini-2.0-flash` 2026.6 단종 | **Gemini Flash Latest** (2.5)로 변경 |
-| Gemini 503 오류 | 서버 일시 과부하 | 재시도로 해결 (일시적) |
-| Gemini 429 오류 | 무료 티어 5 RPM 한도 | RSS 수집 건수 4건으로 제한 권장 |
+### 7.1 중복 저장 방지
+- **Make**: RSS 모듈 자체의 고유 데이터 수집 캐싱과 날짜 조건 설정을 이용해 매 실행 시 신규 건만 들여옵니다.
+- **n8n**: Notion 데이터베이스 조회 API를 사전에 호출하여 `원문 링크 == link` 조건을 만족하는 기존 데이터가 발견되면 **저장 및 요약 단계를 스킵(Skip)**합니다.
 
----
-
-## 📝 참고 문서
-
-- [Make 공식 문서](https://www.make.com/en/help)
-- [Google AI Studio](https://aistudio.google.com)
-- [Notion API 문서](https://developers.notion.com)
-- [Make 워크플로우 상세 설정 가이드](./01_document/03_make_workflow_guide.md)
+### 7.2 AI 요약 비용 최소화
+- **n8n 중복 사전 차단**: 이미 저장 완료된 뉴스 링크에 대해서는 OpenAI 요약 노드를 건너뛰도록 분기를 설계하여, 불필요한 AI 요약 비용을 0원으로 억제했습니다.
+- **1건 요약 원칙**: RSS 수집 리스트 중 주제가 매칭된 최상위 1건만 최종 요약함으로써 일별 AI 토큰 비용을 최소화합니다.
 
 ---
 
-*이 README는 과제 수행 보고서로 작성되었습니다. Make 계정 설정 후 [워크플로우 가이드](./01_document/03_make_workflow_guide.md)를 참고하여 실제 시나리오를 구성하세요.*
+## 8. 노션 DB 스키마 (보너스 과제 적용)
+
+뉴스 요약 결과를 구조화하여 저장하기 위해 구축한 데이터베이스 스키마 명세입니다.
+
+| 속성명 | 데이터 타입 | 설명 | Make 값 매핑 | n8n 값 매핑 |
+| :--- | :--- | :--- | :--- | :--- |
+| **이름** | Title | 뉴스 기사 제목 | `{{2.title}}` | `title` |
+| **Summary** | Rich text | AI가 작성한 3줄 요약 | `{{8.result}}` | `summary` |
+| **URL** | URL | 기사 원본 링크 (중복 방지 키) | `{{2.url}}` | `link` |
+| **Published Date** | Date | 기사 발행 일시 | `{{2.RSS fields: pubdate}}` | `isoDate` |
+| **Source** | Text / Rich text | 뉴스의 출처 매체명 | `AI타임스` (고정) | `TechCrunch` (고정) |
+| **주제 태그** | Multi-select | 매칭된 AI 기술 분야 키워드 | - | `matchedKeywords` |
+| **감성** | Select | 기사 톤앤매너 감성 분류 (긍정/부정/중립) | - | `sentiment` (보너스 과제 2) |
+| **상태** | Select | 저장 처리 및 운영 모니터링 상태 | `완료` | `저장됨` |
+
+---
+
+## 9. 산출물 목록
+
+| 번호 | 산출물 구분 | 파일/디렉토리 위치 |
+| :--- | :--- | :--- |
+| **1** | Make 워크플로우 상세 설정 가이드 | [03_make_workflow_guide.md](./03_make/03_make_workflow_guide.md) |
+| **2** | n8n 설계 결정서 | [design-decisions.md](./04_n8n/docs/design-decisions.md) |
+| **3** | n8n 워크플로우 설명서 | [workflow-design.md](./04_n8n/docs/workflow-design.md) |
+| **4** | n8n 워크플로우 내보내기 JSON | [news-summary.n8n.json](./04_n8n/workflow/news-summary.n8n.json) |
+| **5** | 과제 미션 원문 | [PJ_B 과제미션.txt](./01_document/PJ_B%20과제미션.txt) |
+| **6** | Make 스크린샷 이미지 디렉토리 | [01 make](./02_img/01%20make/) |
+| **7** | n8n 스크린샷 이미지 디렉토리 | [02 n8n](./02_img/02%20n8n/) |
+
+---
+
+## 10. 팀 역할 / 개인 작업 요약
+| 이름 | 역할 | 담당 작업 |
+| :--- | :--- | :--- |
+| **유상우** | 팀장 | **프로젝트 관리 및 Make 워크플로우 설계** (전체 일정 조율 및 산출물 통합 관리, Make 시나리오 구성, RSS 수집 및 HTML 정제 필터 구축, `gemini-2.5-flash` API 연동 및 프롬프트 최적화, Notion Legacy DB 연동 및 매핑) |
+| **정정일** | 팀원 | **n8n 워크플로우 설계** (n8n 노드 구성, 스케줄·필터·분기 로직 설계, Notion DB 중복 조회 쿼리 구현, `gpt-4o-mini` API 연동 및 에러 처리 설계) |
+- **공통 작업**:
+  - **문서화 및 비교**: 두 도구의 워크플로우와 특징을 깊게 이해하고 비교 정리하여 통합 보고서 작성.
