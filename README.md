@@ -194,9 +194,9 @@
 ---
 
 ## 10. 팀 역할 / 개인 작업 요약
-| 이름 | 역할 | 담당 작업 |
+| 이름 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | 역할 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | 담당 작업 |
 | :--- | :--- | :--- |
-| <nobr>**유상우**</nobr> | <nobr>팀장</nobr> | **프로젝트 관리 및 Make 워크플로우 설계** (전체 일정 조율 및 산출물 통합 관리, Make 시나리오 구성, RSS 수집 및 HTML 정제 필터 구축, `gemini-2.5-flash` API 연동 및 프롬프트 최적화, Notion Legacy DB 연동 및 매핑) |
-| <nobr>**정정일**</nobr> | <nobr>팀원</nobr> | **n8n 워크플로우 설계** (n8n 노드 구성, 스케줄·필터·분기 로직 설계, Notion DB 중복 조회 쿼리 구현, `gpt-4o-mini` API 연동 및 에러 처리 설계) |
+| <span style="white-space: nowrap;"><b>유상우</b></span> | <span style="white-space: nowrap;">팀장</span> | **프로젝트 관리 및 Make 워크플로우 설계** (전체 일정 조율 및 산출물 통합 관리, Make 시나리오 구성, RSS 수집 및 HTML 정제 필터 구축, `gemini-2.5-flash` API 연동 및 프롬프트 최적화, Notion Legacy DB 연동 및 매핑) |
+| <span style="white-space: nowrap;"><b>정정일</b></span> | <span style="white-space: nowrap;">팀원</span> | **n8n 워크플로우 설계** (n8n 노드 구성, 스케줄·필터·분기 로직 설계, Notion DB 중복 조회 쿼리 구현, `gpt-4o-mini` API 연동 및 에러 처리 설계) |
 - **공통 작업**:
   - **문서화 및 비교**: 두 도구의 워크플로우와 특징을 깊게 이해하고 비교 정리하여 통합 보고서 작성.
