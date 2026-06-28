@@ -12,7 +12,7 @@
 본 프로젝트에서는 노코드(No-Code) 툴인 **Make**와 로코드(Low-Code) 툴인 **n8n** 두 가지 방식을 모두 활용하여 파이프라인을 다각도로 설계하고 성공적으로 가동시켰습니다.
 - **수집**: RSS 피드를 통한 최신 기술 뉴스 모니터링
 - **정제/필터**: HTML 노이즈 제거 및 사전에 정의한 기술 키워드 기반 필터링
-- **요약**: 생성형 AI(Gemini 2.5 Flash / GPT-4o-mini)를 통한 3줄 한국어 불릿 요약
+- **요약**: 생성형 AI(Gemini 2.5 Flash / GPT-4o-mini)를 활용한 핵심 3줄 요약
 - **저장**: Notion 데이터베이스에 저장하여 지속 관리
 
 ### 사용 도구 스택
@@ -23,7 +23,7 @@
 | **HTML 정제** | Text parser (HTML to text) | Code Node (Regex & DOM 파싱) |
 | **주제 필터링** | Text parser (Match pattern) | Code Node (키워드 매칭 및 최신 1건 선택) |
 | **AI 요약 모델** | **Google gemini-2.5-flash** | **OpenAI gpt-4o-mini** |
-| **저장 플랫폼** | **Notion Database** (Legacy 모듈) | **Notion Database** (HTTP Request 노드) |
+| **저장 플랫폼** | **Notion Database** | **Notion Database** |
 
 ---
 
@@ -49,18 +49,18 @@
 [모듈 14] Notion DB 저장 (Create a Database Item Legacy)
 ```
 
-### 2.2 워크플로우 성공 스크린샷
+### 2.2 Make워크플로우 (성공)
 ![Make 워크플로우](./02_img/01%20make/01%20메이크%20워크플로우_1.png)
 
-### 2.3 Notion 저장 결과 스크린샷
-![Make 노션 저장 결과](./02_img/01%20make/02%20메이크%20노션%20결과_1.png)
+### 2.3 Notion 저장 결과
+![Make 노션 저장 결과](./02_img/01%20make/02%20메이크_노션%20결과_1.png)
 
 ### 2.4 단계별 모듈 설명
-- **모듈 2 - RSS Feed 수집**: `https://www.aitimes.com/rss/allArticle.xml` (AI타임스) 피드로부터 뉴스 데이터를 수집합니다.
-- **모듈 3 - HTML 정제**: RSS 본문에 포함된 지저분한 HTML 태그를 제거해 순수 텍스트로 변환하여 AI 토큰 사용량을 최적화합니다.
-- **모듈 5 - 키워드 필터**: AI 관련 키워드 정규식 매칭을 거쳐 필터링합니다. 단, 파이프라인의 중단을 막기 위해 `Continue even if no matches` 옵션을 `Yes`로 적용했습니다.
-- **모듈 8 - Google Gemini AI 요약**: `gemini-2.5-flash` 모델을 사용하여 기사 제목 및 정제된 본문을 바탕으로 3줄 이내 불릿 기사 요약을 생성합니다.
-- **모듈 14 - Notion DB 저장**: 신규 모듈의 연동 불안정을 방지하고자 안정적인 `Legacy` 모듈을 선택하고 Database ID를 수동 입력하여 저장했습니다.
+- **1단계 (모듈 2) - RSS Feed 수집**: `https://www.aitimes.com/rss/allArticle.xml` (AI타임스) 피드로부터 뉴스 데이터를 수집합니다.
+- **2단계 (모듈 3) - HTML 정제**: RSS 본문에 포함된 지저분한 HTML 태그를 제거해 순수 텍스트로 변환하여 AI 토큰 사용량을 최적화합니다.
+- **3단계 (모듈 5) - 키워드 필터**: AI 관련 키워드 정규식 매칭을 거쳐 필터링합니다. 단, 파이프라인의 중단을 막기 위해 `Continue even if no matches` 옵션을 `Yes`로 적용했습니다.
+- **4단계 (모듈 8) - Google Gemini AI 요약**: `gemini-2.5-flash` 모델을 사용하여 기사 제목 및 정제된 본문을 바탕으로 핵심 3줄 요약을 생성합니다.
+- **5단계 (모듈 14) - Notion DB 저장**: 신규 모듈의 연동 불안정을 방지하고자 안정적인 `Legacy` 모듈을 선택하고 Database ID를 수동 입력하여 저장했습니다.
 
 ---
 
@@ -92,20 +92,20 @@
 [Notion 저장] (HTTP Request 활용 API 저장)
 ```
 
-### 3.2 워크플로우 성공 스크린샷
+### 3.2 n8n 워크플로우 (성공)
 ![n8n 워크플로우](./02_img/02%20n8n/01_n8n_워크플로_성공.png)
 
-### 3.3 Notion 저장 결과 스크린샷
+### 3.3 Notion 저장 결과
 ![n8n 노션 저장 결과](./02_img/02%20n8n/02_n8n_노션_DB_페이지.png)
 
 ### 3.4 단계별 노드 설명
-- **Schedule Trigger**: `cron 0 9 * * *` 설정을 통해 매일 오전 9시 정각(Asia/Seoul)에 워크플로우를 자동 가동합니다.
-- **RSS Feed Read**: TechCrunch RSS를 통해 최신 발행 기사 데이터를 수집합니다.
-- **주제 필터 (Code Node)**: AI 분야 키워드를 검색하여 매칭시키며, 과제 요구사항에 맞게 조건 충족 기사 중 **가장 최신 1건**을 최종 추출합니다. 기사가 존재하지 않는 경우 파이프라인의 에러가 아닌 정상 분기로 빠지게 처리합니다.
-- **Notion 중복 조회 (HTTP Request)**: Notion DB를 URL(원문 링크) 기준으로 필터링 쿼리하여 이미 등록된 기사가 있는지 선제 조회합니다.
-- **OpenAI 요약 (HTTP Request)**: 신규 기사인 경우에만 `gpt-4o-mini` API를 호출해 3줄 이내 요약과 함께 기사 감성(긍정/부정/중립)을 한 번에 분석합니다.
-- **요약 파싱 (Code Node)**: AI 응답에서 요약문과 감성 데이터를 발라내어 정제합니다.
-- **Notion 저장 (HTTP Request)**: 최종 정제된 텍스트 및 속성 값을 Notion DB에 저장합니다.
+- **1단계 - Schedule Trigger**: 매일 아침 9시 정각에 뉴스 정리 작업이 스스로 시작하도록 실행 시간(크론식 `0 9 * * *`)을 예약해 둔 단계입니다.
+- **2단계 - RSS Feed Read**: TechCrunch RSS를 통해 최신 발행 기사 데이터를 수집합니다.
+- **3단계 - 주제 필터 (Code Node)**: AI 분야 키워드를 검색하여 매칭시키며, 과제 요구사항에 맞게 조건 충족 기사 중 **가장 최신 1건**을 최종 추출합니다. 기사가 존재하지 않는 경우 파이프라인의 에러가 아닌 정상 분기로 빠지게 처리합니다.
+- **4단계 - Notion 중복 조회 (HTTP Request)**: Notion DB를 URL(원문 링크) 기준으로 필터링 쿼리하여 이미 등록된 기사가 있는지 선제 조회합니다.
+- **5단계 - OpenAI 요약 (HTTP Request)**: 신규 기사인 경우에만 `gpt-4o-mini` API를 호출해 핵심 3줄 요약과 함께 기사 감성(긍정/부정/중립)을 한 번에 분석합니다.
+- **6단계 - 요약 파싱 (Code Node)**: AI 응답에서 요약문과 감성 데이터를 발라내어 정제합니다.
+- **7단계 - Notion 저장 (HTTP Request)**: 최종 정제된 텍스트 및 속성 값을 Notion DB에 저장합니다.
 
 ---
 
@@ -190,9 +190,6 @@
 | **2** | n8n 설계 결정서 | [design-decisions.md](./04_n8n/docs/design-decisions.md) |
 | **3** | n8n 워크플로우 설명서 | [workflow-design.md](./04_n8n/docs/workflow-design.md) |
 | **4** | n8n 워크플로우 내보내기 JSON | [news-summary.n8n.json](./04_n8n/workflow/news-summary.n8n.json) |
-| **5** | 과제 미션 원문 | [PJ_B 과제미션.txt](./01_document/PJ_B%20과제미션.txt) |
-| **6** | Make 스크린샷 이미지 디렉토리 | [01 make](./02_img/01%20make/) |
-| **7** | n8n 스크린샷 이미지 디렉토리 | [02 n8n](./02_img/02%20n8n/) |
 
 ---
 
