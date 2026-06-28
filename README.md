@@ -2,8 +2,8 @@
 
 > **Project B** | Codyssey AI Native Course  
 > **자동화 툴**: Make (make.com) & n8n  
-> **AI 모델**: Google Gemini 2.5 Flash (gemini-2.5-flash) 및 OpenAI GPT-4o-mini  
-> **저장소**: Notion Database  
+> **AI 모델**: Google Gemini 2.5 Flash 및 OpenAI GPT-4o-mini  
+> **저장소**: Notion Database
 
 
 ---
