@@ -92,11 +92,15 @@
 [Notion 저장] (HTTP Request 활용 API 저장)
 ```
 
-### 3.2 n8n 워크플로우 (성공)
-![n8n 워크플로우](./02_img/02%20n8n/01_n8n_워크플로_성공.png)
+### 3.2 n8n 워크플로우
+#### 성공 케이스 (Schedule Trigger)
+![n8n 워크플로우 성공](./02_img/02%20n8n/01_n8n_워크플로_Schedule_Trigger.png)
+
+#### 에러 케이스 (Error Trigger)
+![n8n 워크플로우 에러](./02_img/02%20n8n/01_n8n_워크플로_Error_Trigger.png)
 
 ### 3.3 Notion 저장 결과
-![n8n 노션 저장 결과](./02_img/02%20n8n/02_n8n_노션_DB_페이지.png)
+![n8n 노션 저장 결과](./02_img/02%20n8n/02_노션_DB_페이지_260629.png)
 
 ### 3.4 단계별 노드 설명
 - **Schedule Trigger**: 매일 아침 9시 정각에 뉴스 정리 작업이 스스로 시작하도록 실행 시간(크론식 `0 9 * * *`)을 예약해 둔 단계입니다.
