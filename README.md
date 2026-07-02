@@ -190,7 +190,7 @@
 
 | 번호 | 산출물 구분 | 파일/디렉토리 위치 |
 | :--- | :--- | :--- |
-| **1** | Make 워크플로우 상세 설정 가이드 | [make_workflow_guide.md](./03_make/03_make_workflow_guide.md) |
+| **1** | Make 워크플로우 상세 설정 가이드 | [make_workflow_guide.md](./03_make/make_workflow_guide.md) |
 | **2** | n8n 설계 결정서 | [design-decisions.md](./04_n8n/docs/design-decisions.md) |
 | **3** | n8n 워크플로우 설명서 | [workflow-design.md](./04_n8n/docs/workflow-design.md) |
 | **4** | n8n 워크플로우 내보내기 JSON | [news-summary.n8n.json](./04_n8n/workflow/news-summary.n8n.json) |
